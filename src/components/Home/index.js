@@ -1,5 +1,7 @@
 import {Component} from 'react'
 import Loader from 'react-loader-spinner'
+import {BsSearch} from 'react-icons/bs'
+import {FcGenericSortingAsc, FcGenericSortingDesc} from 'react-icons/fc'
 
 import Header from '../Header'
 import Footer from '../Footer'
@@ -9,130 +11,278 @@ import './index.css'
 const apiStatusConstants = {
   initial: 'INITIAL',
   success: 'SUCCESS',
-  failure: 'FAILURE',
   inProgress: 'IN_PROGRESS',
 }
 
-class AllProductsSection extends Component {
+const stateCodes = [
+  {
+    state_code: 'AN',
+    state_name: 'Andaman and Nicobar Islands',
+  },
+  {
+    state_code: 'AP',
+    state_name: 'Andhra Pradesh',
+  },
+  {
+    state_code: 'AR',
+    state_name: 'Arunachal Pradesh',
+  },
+  {
+    state_code: 'AS',
+    state_name: 'Assam',
+  },
+  {
+    state_code: 'BR',
+    state_name: 'Bihar',
+  },
+  {
+    state_code: 'CH',
+    state_name: 'Chandigarh',
+  },
+  {
+    state_code: 'CT',
+    state_name: 'Chhattisgarh',
+  },
+  {
+    state_code: 'DN',
+    state_name: 'Dadra and Nagar Haveli and Daman and Diu',
+  },
+  {
+    state_code: 'DL',
+    state_name: 'Delhi',
+  },
+  {
+    state_code: 'GA',
+    state_name: 'Goa',
+  },
+  {
+    state_code: 'GJ',
+    state_name: 'Gujarat',
+  },
+  {
+    state_code: 'HR',
+    state_name: 'Haryana',
+  },
+  {
+    state_code: 'HP',
+    state_name: 'Himachal Pradesh',
+  },
+  {
+    state_code: 'JK',
+    state_name: 'Jammu and Kashmir',
+  },
+  {
+    state_code: 'JH',
+    state_name: 'Jharkhand',
+  },
+  {
+    state_code: 'KA',
+    state_name: 'Karnataka',
+  },
+  {
+    state_code: 'KL',
+    state_name: 'Kerala',
+  },
+  {
+    state_code: 'LA',
+    state_name: 'Ladakh',
+  },
+  {
+    state_code: 'LD',
+    state_name: 'Lakshadweep',
+  },
+  {
+    state_code: 'MH',
+    state_name: 'Maharashtra',
+  },
+  {
+    state_code: 'MP',
+    state_name: 'Madhya Pradesh',
+  },
+  {
+    state_code: 'MN',
+    state_name: 'Manipur',
+  },
+  {
+    state_code: 'ML',
+    state_name: 'Meghalaya',
+  },
+  {
+    state_code: 'MZ',
+    state_name: 'Mizoram',
+  },
+  {
+    state_code: 'NL',
+    state_name: 'Nagaland',
+  },
+  {
+    state_code: 'OR',
+    state_name: 'Odisha',
+  },
+  {
+    state_code: 'PY',
+    state_name: 'Puducherry',
+  },
+  {
+    state_code: 'PB',
+    state_name: 'Punjab',
+  },
+  {
+    state_code: 'RJ',
+    state_name: 'Rajasthan',
+  },
+  {
+    state_code: 'SK',
+    state_name: 'Sikkim',
+  },
+  {
+    state_code: 'TN',
+    state_name: 'Tamil Nadu',
+  },
+  {
+    state_code: 'TG',
+    state_name: 'Telangana',
+  },
+  {
+    state_code: 'TR',
+    state_name: 'Tripura',
+  },
+  {
+    state_code: 'UP',
+    state_name: 'Uttar Pradesh',
+  },
+  {
+    state_code: 'UT',
+    state_name: 'Uttarakhand',
+  },
+  {
+    state_code: 'WB',
+    state_name: 'West Bengal',
+  },
+]
+
+class Home extends Component {
   state = {
-    productsList: [],
+    statesList: [],
     apiStatus: apiStatusConstants.initial,
-    activeOptionId: sortbyOptions[0].optionId,
-    activeCategoryId: '',
+    activeSortId: 0,
     searchInput: '',
-    activeRatingId: '',
   }
 
   componentDidMount() {
-    this.getProducts()
+    this.getStates()
   }
 
-  getProducts = async () => {
+  getStates = async () => {
     this.setState({
       apiStatus: apiStatusConstants.inProgress,
     })
-    const jwtToken = Cookies.get('jwt_token')
-    const {
-      activeOptionId,
-      activeCategoryId,
-      searchInput,
-      activeRatingId,
-    } = this.state
-    const apiUrl = `https://apis.ccbp.in/products?sort_by=${activeOptionId}&category=${activeCategoryId}&title_search=${searchInput}&rating=${activeRatingId}`
+
+    const apiUrl = 'https://apis.ccbp.in/covid19-state-wise-data'
     const options = {
-      headers: {
-        Authorization: `Bearer ${jwtToken}`,
-      },
       method: 'GET',
     }
     const response = await fetch(apiUrl, options)
-    if (response.ok) {
-      const fetchedData = await response.json()
-      const updatedData = fetchedData.products.map(product => ({
-        title: product.title,
-        brand: product.brand,
-        price: product.price,
-        id: product.id,
-        imageUrl: product.image_url,
-        rating: product.rating,
-      }))
-      this.setState({
-        productsList: updatedData,
-        apiStatus: apiStatusConstants.success,
-      })
-    } else {
-      this.setState({
-        apiStatus: apiStatusConstants.failure,
-      })
-    }
+
+    const fetchedData = await response.json()
+    console.log(fetchedData)
+    const updatedData = this.setState({
+      statesList: fetchedData,
+      apiStatus: apiStatusConstants.success,
+    })
   }
 
   renderLoadingView = () => (
-    <div className="products-loader-container">
+    <div data-testid="homeRouteLoader" className="products-loader-container">
       <Loader type="ThreeDots" color="#0b69ff" height="50" width="50" />
     </div>
   )
 
-  renderFailureView = () => (
-    <div className="products-error-view-container">
-      <img
-        src="https://assets.ccbp.in/frontend/react-js/nxt-trendz/nxt-trendz-products-error-view.png"
-        alt="all-products-error"
-        className="products-failure-img"
-      />
-      <h1 className="product-failure-heading-text">
-        Oops! Something Went Wrong
-      </h1>
-      <p className="products-failure-description">
-        We are having some trouble processing your request. Please try again.
-      </p>
-    </div>
-  )
-
-  changeSortby = activeOptionId => {
-    this.setState({activeOptionId}, this.getProducts)
+  changeSortId = activeSortId => {
+    this.setState(prevState => ({activeSortId: 1 - prevState.activeSortId}))
   }
 
-  renderProductsListView = () => {
-    const {productsList, activeOptionId} = this.state
-    const shouldShowProductsList = productsList.length > 0
-
-    return shouldShowProductsList ? (
-      <div className="all-products-container">
-        <ProductsHeader
-          activeOptionId={activeOptionId}
-          sortbyOptions={sortbyOptions}
-          changeSortby={this.changeSortby}
-        />
-        <ul className="products-list">
-          {productsList.map(product => (
-            <ProductCard productData={product} key={product.id} />
-          ))}
-        </ul>
-      </div>
-    ) : (
-      <div className="no-products-view">
-        <img
-          src="https://assets.ccbp.in/frontend/react-js/nxt-trendz/nxt-trendz-no-products-view.png"
-          className="no-products-img"
-          alt="no products"
-        />
-        <h1 className="no-products-heading">No Products Found</h1>
-        <p className="no-products-description">
-          We could not find any products. Try other filters.
-        </p>
-      </div>
-    )
+  changeSearchInput = searchInput => {
+    this.setState({searchInput})
   }
 
   renderAllProducts = () => {
-    const {apiStatus} = this.state
+    const {apiStatus, searchInput} = this.state
 
     switch (apiStatus) {
       case apiStatusConstants.success:
-        return this.renderProductsListView()
-      case apiStatusConstants.failure:
-        return this.renderFailureView()
+        return (
+          <div>
+            <Header />
+            <div className="hor-card">
+              <BsSearch />
+              <input
+                type="search"
+                onChange={this.changeSearchInput()}
+                value={searchInput}
+                placeholder="Enter the State"
+              />
+            </div>
+            <div className="hor-card">
+              <div data-testid="countryWideConfirmedCases">
+                <h1>Confirmed</h1>
+                <img
+                  alt="country wide confirmed cases pic"
+                  src="https://www.figma.com/file/lGl9tRXcsmxicjTITM2A8P/Covid19_Dashboard?type=design&node-id=9848-8573&mode=design&t=o4K9vIu3osA35VU7-4"
+                />
+                <h1>{}</h1>
+              </div>
+              <div data-testid="countryWideActiveCases">
+                <h1>Active</h1>
+                <img
+                  alt="country wide active cases pic"
+                  src="https://www.figma.com/file/lGl9tRXcsmxicjTITM2A8P/Covid19_Dashboard?type=design&node-id=9848-8600&mode=design&t=o4K9vIu3osA35VU7-4"
+                />
+                <h1>{}</h1>
+              </div>
+              <div data-testid="countryWideRecoveredCases">
+                <h1>Recovered</h1>
+                <img
+                  alt="country wide recovered cases pic"
+                  src="https://www.figma.com/file/lGl9tRXcsmxicjTITM2A8P/Covid19_Dashboard?type=design&node-id=9848-8570&mode=design&t=o4K9vIu3osA35VU7-4"
+                />
+                <h1>{}</h1>
+              </div>
+              <div data-testid="countryWideDeceasedCases">
+                <h1>Deceased</h1>
+                <img
+                  alt="country wide deceased cases pic"
+                  src="https://www.figma.com/file/lGl9tRXcsmxicjTITM2A8P/Covid19_Dashboard?type=design&node-id=9848-8579&mode=design&t=o4K9vIu3osA35VU7-4"
+                />
+                <h1>{}</h1>
+              </div>
+            </div>
+            <table>
+              <thread className="hor-card">
+                <tr>
+                  <th className="hor-card">
+                    <h1>States/UT</h1>
+                    <button
+                      data-testid="ascendingSort"
+                      type="button"
+                      onClick={this.changeSortId(0)}
+                    >
+                      <FcGenericSortingAsc alt=" asc sort icon" />
+                    </button>
+                    <button
+                      data-testid="descendingSort"
+                      type="button"
+                      onClick={this.changeSortId(1)}
+                    >
+                      <FcGenericSortingDesc alt=" desc sort icon" />
+                    </button>
+                  </th>
+                </tr>
+              </thread>
+            </table>
+            <Footer />
+          </div>
+        )
       case apiStatusConstants.inProgress:
         return this.renderLoadingView()
       default:
@@ -140,52 +290,11 @@ class AllProductsSection extends Component {
     }
   }
 
-  clearFilters = () => {
-    this.setState(
-      {
-        searchInput: '',
-        activeCategoryId: '',
-        activeRatingId: '',
-      },
-      this.getProducts,
-    )
-  }
-
-  changeRating = activeRatingId => {
-    this.setState({activeRatingId}, this.getProducts)
-  }
-
-  changeCategory = activeCategoryId => {
-    this.setState({activeCategoryId}, this.getProducts)
-  }
-
-  enterSearchInput = () => {
-    this.getProducts()
-  }
-
-  changeSearchInput = searchInput => {
-    this.setState({searchInput})
-  }
-
   render() {
     const {activeCategoryId, searchInput, activeRatingId} = this.state
 
     return (
-      <div className="all-products-section">
-        <FiltersGroup
-          searchInput={searchInput}
-          categoryOptions={categoryOptions}
-          ratingsList={ratingsList}
-          changeSearchInput={this.changeSearchInput}
-          enterSearchInput={this.enterSearchInput}
-          activeCategoryId={activeCategoryId}
-          activeRatingId={activeRatingId}
-          changeCategory={this.changeCategory}
-          changeRating={this.changeRating}
-          clearFilters={this.clearFilters}
-        />
-        {this.renderAllProducts()}
-      </div>
+      <div className="all-products-section">{this.renderAllProducts()}</div>
     )
   }
 }
