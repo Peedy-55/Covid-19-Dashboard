@@ -10,9 +10,6 @@ In this project, I've crafted a **Covid19 Dashboard** using React, incorporating
 ### UI Prerequisites
 
 - Utilized Figma, a web-based vector graphics editor, for design purposes.
-- Created a Figma account as guided in [this video](https://www.youtube.com/watch?v=hrHL2VLMl7g).
-- Checked CSS in Figma following [this guide](https://youtu.be/B242nuM3y2s?t=80).
-- Exported images from Figma using [this video tutorial](https://www.youtube.com/watch?v=NpzL1MONwaw).
 
 ### Design Files
 
