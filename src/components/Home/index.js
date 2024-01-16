@@ -184,10 +184,15 @@ class Home extends Component {
     }
     const response = await fetch(apiUrl, options)
 
-    const fetchedData = await response.json()
-    console.log(fetchedData)
-    const updatedData = this.setState({
-      statesList: fetchedData,
+    const data = await response.json()
+    // console.log(stateCodes, data)
+    const resultList = this.convertObjectsDataIntoListItemsUsingForInMethod(
+      stateCodes,
+      data,
+    )
+    console.log(resultList)
+    this.setState({
+      statesList: resultList,
       apiStatus: apiStatusConstants.success,
     })
   }
@@ -206,9 +211,55 @@ class Home extends Component {
     this.setState({searchInput})
   }
 
-  renderAllProducts = () => {
-    const {apiStatus, searchInput} = this.state
+  convertObjectsDataIntoListItemsUsingForInMethod = (statesList, data) => {
+    const resultList = []
 
+    const keyNames = Object.keys(data)
+
+    keyNames.forEach(keyName => {
+      if (data[keyName]) {
+        const {total} = data[keyName]
+
+        const confirmed = total.confirmed ? total.confirmed : 0
+        const deceased = total.deceased ? total.deceased : 0
+        const recovered = total.recovered ? total.recovered : 0
+        const tested = total.tested ? total.tested : 0
+        const population = data[keyName].meta.population
+          ? data[keyName].meta.population
+          : 0
+        const matchingState = statesList.find(
+          state => state.state_code === keyName,
+        )
+
+        if (matchingState) {
+          resultList.push({
+            stateCode: keyName,
+            name: matchingState.state_name,
+            confirmed,
+            deceased,
+            recovered,
+            tested,
+            population,
+            active: confirmed - (deceased + recovered),
+          })
+        }
+      }
+    })
+    return resultList
+  }
+
+  renderAllProducts = () => {
+    const {apiStatus, searchInput, statesList} = this.state
+    const totalCases = statesList.reduce(
+      (accumulator, currentState) => {
+        accumulator.confirmed += currentState.confirmed
+        accumulator.deceased += currentState.deceased
+        accumulator.recovered += currentState.recovered
+        accumulator.active += currentState.active
+        return accumulator
+      },
+      {confirmed: 0, deceased: 0, recovered: 0, active: 0},
+    )
     switch (apiStatus) {
       case apiStatusConstants.success:
         return (
@@ -218,7 +269,7 @@ class Home extends Component {
               <BsSearch />
               <input
                 type="search"
-                onChange={this.changeSearchInput()}
+                onChange={this.changeSearchInput}
                 value={searchInput}
                 placeholder="Enter the State"
               />
@@ -228,57 +279,80 @@ class Home extends Component {
                 <h1>Confirmed</h1>
                 <img
                   alt="country wide confirmed cases pic"
-                  src="https://www.figma.com/file/lGl9tRXcsmxicjTITM2A8P/Covid19_Dashboard?type=design&node-id=9848-8573&mode=design&t=o4K9vIu3osA35VU7-4"
+                  src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383239/check-mark_1_h9x9vy.png"
                 />
-                <h1>{}</h1>
+                <h1>{totalCases.confirmed}</h1>
               </div>
               <div data-testid="countryWideActiveCases">
                 <h1>Active</h1>
                 <img
                   alt="country wide active cases pic"
-                  src="https://www.figma.com/file/lGl9tRXcsmxicjTITM2A8P/Covid19_Dashboard?type=design&node-id=9848-8600&mode=design&t=o4K9vIu3osA35VU7-4"
+                  src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383323/protection_1_vb9yi3.png"
                 />
-                <h1>{}</h1>
+                <h1>{totalCases.active}</h1>
               </div>
               <div data-testid="countryWideRecoveredCases">
                 <h1>Recovered</h1>
                 <img
                   alt="country wide recovered cases pic"
-                  src="https://www.figma.com/file/lGl9tRXcsmxicjTITM2A8P/Covid19_Dashboard?type=design&node-id=9848-8570&mode=design&t=o4K9vIu3osA35VU7-4"
+                  src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383323/recovered_1_dtdq2j.png"
                 />
-                <h1>{}</h1>
+                <h1>{totalCases.recovered}</h1>
               </div>
               <div data-testid="countryWideDeceasedCases">
                 <h1>Deceased</h1>
                 <img
                   alt="country wide deceased cases pic"
-                  src="https://www.figma.com/file/lGl9tRXcsmxicjTITM2A8P/Covid19_Dashboard?type=design&node-id=9848-8579&mode=design&t=o4K9vIu3osA35VU7-4"
+                  src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383322/breathing_1_raykzi.png"
                 />
-                <h1>{}</h1>
+                <h1>{totalCases.deceased}</h1>
               </div>
             </div>
             <table>
-              <thread className="hor-card">
+              <thead className="hor-card">
                 <tr>
-                  <th className="hor-card">
-                    <h1>States/UT</h1>
-                    <button
-                      data-testid="ascendingSort"
-                      type="button"
-                      onClick={this.changeSortId(0)}
-                    >
-                      <FcGenericSortingAsc alt=" asc sort icon" />
-                    </button>
-                    <button
-                      data-testid="descendingSort"
-                      type="button"
-                      onClick={this.changeSortId(1)}
-                    >
-                      <FcGenericSortingDesc alt=" desc sort icon" />
-                    </button>
+                  <th>
+                    <div className="hor-card">
+                      <h1>States/UT</h1>
+                      <button
+                        data-testid="ascendingSort"
+                        type="button"
+                        onClick={() => {
+                          this.changeSortId(0)
+                        }}
+                      >
+                        <FcGenericSortingAsc alt=" asc sort icon" />
+                      </button>
+                      <button
+                        data-testid="descendingSort"
+                        type="button"
+                        onClick={() => {
+                          this.changeSortId(1)
+                        }}
+                      >
+                        <FcGenericSortingDesc alt=" desc sort icon" />
+                      </button>
+                    </div>
                   </th>
+                  <th>Confirmed</th>
+                  <th>Active</th>
+                  <th>Recovered</th>
+                  <th>Deceased</th>
+                  <th>Population</th>
                 </tr>
-              </thread>
+              </thead>
+              <tbody>
+                {statesList.map(each => (
+                  <tr key={each.stateCode}>
+                    <td>{each.name}</td>
+                    <td>{each.confirmed}</td>
+                    <td>{each.active}</td>
+                    <td>{each.recovered}</td>
+                    <td>{each.deceased}</td>
+                    <td>{each.population}</td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
             <Footer />
           </div>
@@ -291,8 +365,6 @@ class Home extends Component {
   }
 
   render() {
-    const {activeCategoryId, searchInput, activeRatingId} = this.state
-
     return (
       <div className="all-products-section">{this.renderAllProducts()}</div>
     )
