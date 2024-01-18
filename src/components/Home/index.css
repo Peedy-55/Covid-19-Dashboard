@@ -3,3 +3,16 @@
   justify-content: space-around;
   align-items: center;
 }
+
+li {
+  margin: 10px;
+  list-style-type: none;
+}
+
+div {
+  text-align: center;
+}
+
+thead {
+  text-align: center;
+}

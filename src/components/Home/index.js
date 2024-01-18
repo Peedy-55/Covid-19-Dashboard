@@ -1,7 +1,10 @@
+/* eslint-disable react/no-unknown-property */
+import {Link} from 'react-router-dom'
 import {Component} from 'react'
 import Loader from 'react-loader-spinner'
 import {BsSearch} from 'react-icons/bs'
 import {FcGenericSortingAsc, FcGenericSortingDesc} from 'react-icons/fc'
+import {BiChevronRightSquare} from 'react-icons/bi'
 
 import Header from '../Header'
 import Footer from '../Footer'
@@ -198,17 +201,52 @@ class Home extends Component {
   }
 
   renderLoadingView = () => (
-    <div data-testid="homeRouteLoader" className="products-loader-container">
+    <div testid="homeRouteLoader" className="products-loader-container">
       <Loader type="ThreeDots" color="#0b69ff" height="50" width="50" />
     </div>
   )
 
-  changeSortId = activeSortId => {
-    this.setState(prevState => ({activeSortId: 1 - prevState.activeSortId}))
+  compareStates = (stateA, stateB) => {
+    const nameA = stateA.name.toUpperCase()
+    const nameB = stateB.name.toUpperCase()
+
+    if (nameA < nameB) {
+      return -1
+    }
+    if (nameA > nameB) {
+      return 1
+    }
+    return 0
   }
 
-  changeSearchInput = searchInput => {
-    this.setState({searchInput})
+  compareStatesReverse = (stateA, stateB) => {
+    const nameA = stateA.name.toUpperCase()
+    const nameB = stateB.name.toUpperCase()
+
+    if (nameA < nameB) {
+      return 1 // Reverse order
+    }
+    if (nameA > nameB) {
+      return -1 // Reverse order
+    }
+    return 0
+  }
+
+  changeSortId = activeSortId => {
+    const {statesList} = this.state
+    this.setState()
+    const sortedStatesList =
+      activeSortId === 0
+        ? statesList.sort(this.compareStates)
+        : statesList.sort(this.compareStatesReverse)
+    this.setState(prevState => ({
+      activeSortId: 1 - prevState.activeSortId,
+      statesList: sortedStatesList,
+    }))
+  }
+
+  changeSearchInput = event => {
+    this.setState({searchInput: event.target.value})
   }
 
   convertObjectsDataIntoListItemsUsingForInMethod = (statesList, data) => {
@@ -274,87 +312,109 @@ class Home extends Component {
                 placeholder="Enter the State"
               />
             </div>
-            <div className="hor-card">
-              <div data-testid="countryWideConfirmedCases">
-                <h1>Confirmed</h1>
-                <img
-                  alt="country wide confirmed cases pic"
-                  src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383239/check-mark_1_h9x9vy.png"
-                />
-                <h1>{totalCases.confirmed}</h1>
+            {searchInput.length === 0 && (
+              <div>
+                <div className="hor-card">
+                  <div testid="countryWideConfirmedCases">
+                    <p>Confirmed</p>
+                    <img
+                      alt="country wide confirmed cases pic"
+                      src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383239/check-mark_1_h9x9vy.png"
+                    />
+                    <p>{totalCases.confirmed}</p>
+                  </div>
+                  <div testid="countryWideActiveCases">
+                    <p>Active</p>
+                    <img
+                      alt="country wide active cases pic"
+                      src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383323/protection_1_vb9yi3.png"
+                    />
+                    <p>{totalCases.active}</p>
+                  </div>
+                  <div testid="countryWideRecoveredCases">
+                    <p>Recovered</p>
+                    <img
+                      alt="country wide recovered cases pic"
+                      src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383323/recovered_1_dtdq2j.png"
+                    />
+                    <p>{totalCases.recovered}</p>
+                  </div>
+                  <div testid="countryWideDeceasedCases">
+                    <p>Deceased</p>
+                    <img
+                      alt="country wide deceased cases pic"
+                      src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383322/breathing_1_raykzi.png"
+                    />
+                    <p>{totalCases.deceased}</p>
+                  </div>
+                </div>
+                <div testid="stateWiseCovidDataTable">
+                  <ul>
+                    <li className="hor-card">
+                      <div className="hor-card">
+                        <h1>States/UT</h1>
+                        <button
+                          testid="ascendingSort"
+                          type="button"
+                          onClick={() => {
+                            this.changeSortId(1)
+                          }}
+                        >
+                          <FcGenericSortingAsc alt=" asc sort icon" />
+                        </button>
+                        <button
+                          testid="descendingSort"
+                          type="button"
+                          onClick={() => {
+                            this.changeSortId(0)
+                          }}
+                        >
+                          <FcGenericSortingDesc alt=" desc sort icon" />
+                        </button>
+                      </div>
+
+                      <p>Confirmed</p>
+                      <p>Active</p>
+                      <p>Recovered</p>
+                      <p>Deceased</p>
+                      <p>Population</p>
+                    </li>
+                    {statesList.map(each => (
+                      <li key={each.stateCode}>
+                        <p>{each.name}</p>
+                        <p>{each.confirmed}</p>
+                        <p>{each.active}</p>
+                        <p>{each.recovered}</p>
+                        <p>{each.deceased}</p>
+                        <p>{each.population}</p>
+                      </li>
+                    ))}
+                  </ul>
+                  <Footer />
+                </div>
               </div>
-              <div data-testid="countryWideActiveCases">
-                <h1>Active</h1>
-                <img
-                  alt="country wide active cases pic"
-                  src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383323/protection_1_vb9yi3.png"
-                />
-                <h1>{totalCases.active}</h1>
-              </div>
-              <div data-testid="countryWideRecoveredCases">
-                <h1>Recovered</h1>
-                <img
-                  alt="country wide recovered cases pic"
-                  src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383323/recovered_1_dtdq2j.png"
-                />
-                <h1>{totalCases.recovered}</h1>
-              </div>
-              <div data-testid="countryWideDeceasedCases">
-                <h1>Deceased</h1>
-                <img
-                  alt="country wide deceased cases pic"
-                  src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383322/breathing_1_raykzi.png"
-                />
-                <h1>{totalCases.deceased}</h1>
-              </div>
-            </div>
-            <table>
-              <thead className="hor-card">
-                <tr>
-                  <th>
-                    <div className="hor-card">
-                      <h1>States/UT</h1>
-                      <button
-                        data-testid="ascendingSort"
-                        type="button"
-                        onClick={() => {
-                          this.changeSortId(0)
-                        }}
-                      >
-                        <FcGenericSortingAsc alt=" asc sort icon" />
-                      </button>
-                      <button
-                        data-testid="descendingSort"
-                        type="button"
-                        onClick={() => {
-                          this.changeSortId(1)
-                        }}
-                      >
-                        <FcGenericSortingDesc alt=" desc sort icon" />
-                      </button>
-                    </div>
-                  </th>
-                  <th>Confirmed</th>
-                  <th>Active</th>
-                  <th>Recovered</th>
-                  <th>Deceased</th>
-                  <th>Population</th>
-                </tr>
-              </thead>
-              <tbody>
-                {statesList.map(each => (
-                  <tr key={each.stateCode}>
-                    <td>{each.name}</td>
-                    <td>{each.confirmed}</td>
-                    <td>{each.active}</td>
-                    <td>{each.recovered}</td>
-                    <td>{each.deceased}</td>
-                    <td>{each.population}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <Footer />
+            )}
+            {searchInput.length !== 0 && (
+              <ul testid="searchResultsUnorderedList">
+                {statesList
+                  .filter(each =>
+                    each.name.toLowerCase().includes(searchInput.toLowerCase()),
+                  )
+                  .map(match => (
+                    <li className="hor-card">
+                      <Link to={`state/${match.stateCode}`}>
+                        <div className="hor-card">
+                          <p>{match.name}</p>
+                          <div className="hor-card">
+                            <p>{match.stateCode}</p>
+                            <BiChevronRightSquare />
+                          </div>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+              </ul>
+            )}
           </div>
         )
       case apiStatusConstants.inProgress:
