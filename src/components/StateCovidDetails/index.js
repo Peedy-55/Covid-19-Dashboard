@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unknown-property */
 import {Component} from 'react'
 import Loader from 'react-loader-spinner'
-import Select from 'react-select'
+// import Select from 'react-select's
 
 import Header from '../Header'
 import Footer from '../Footer'
@@ -174,9 +174,9 @@ class StateCovidDetails extends Component {
   }
 
   getDistricts = () => {
-    const {match} = this.props
-    const {params} = match
-    const {id} = params
+    // const {match} = this.props
+    // const {params} = match
+    // const {stateCode} = params
 
     this.setState({
       apiStatus: apiStatusConstants.inProgress,
@@ -186,20 +186,20 @@ class StateCovidDetails extends Component {
     const options = {
       method: 'GET',
     }
-    // console.log(id)
+    // console.log(stateCode)
     fetch(requestUrl, options)
       .then(response => response.json())
       .then(jsonData => {
         console.log(jsonData)
 
-        const keyNames = Object.keys(jsonData[id].dates)
+        // const keyNames = Object.keys(jsonData[stateCode].dates)
 
         // keyNames.forEach(date => {
         //   console.log('date: ', date)
-        //   console.log('confirmed:', jsonData[id].dates[date].total.confirmed)
-        //   console.log('deceased:', jsonData[id].dates[date].total.deceased)
-        //   console.log('recovered:', jsonData[id].dates[date].total.recovered)
-        //   console.log('tested:', jsonData[id].dates[date].total.tested)
+        //   console.log('confirmed:', jsonData[stateCode].dates[date].total.confirmed)
+        //   console.log('deceased:', jsonData[stateCode].dates[date].total.deceased)
+        //   console.log('recovered:', jsonData[stateCode].dates[date].total.recovered)
+        //   console.log('tested:', jsonData[stateCode].dates[date].total.tested)
         // })
       })
   }
@@ -207,7 +207,7 @@ class StateCovidDetails extends Component {
   getStates = async () => {
     const {match} = this.props
     const {params} = match
-    const {id} = params
+    const {stateCode} = params
 
     this.setState({
       apiStatus: apiStatusConstants.inProgress,
@@ -221,13 +221,13 @@ class StateCovidDetails extends Component {
 
     const data = await response.json()
 
-    console.log(data, 'data')
+    // console.log(data, 'data')
     const resultList = this.convertObjectsDataIntoListItemsUsingForInMethod(
       stateCodes,
       data,
     )
     // console.log(resultList, 'stateCovidDetails')
-    const requiredResult = resultList.find(each => each.stateCode === id)
+    const requiredResult = resultList.find(each => each.stateCode === stateCode)
     console.log(requiredResult)
     this.setState({
       statesList: requiredResult,
@@ -242,7 +242,7 @@ class StateCovidDetails extends Component {
   }
 
   renderLoadingView = () => (
-    <div testid="homeRouteLoader" className="products-loader-container">
+    <div testid="stateDetailsLoader" className="products-loader-container">
       <Loader type="ThreeDots" color="#0b69ff" height="50" width="50" />
     </div>
   )
@@ -286,13 +286,51 @@ class StateCovidDetails extends Component {
     return resultList
   }
 
-  onChangeActiveSort = event => {
-    this.setState({activeSort: event.target.value})
+  onChangeActiveSort = sort => {
+    this.setState({activeSort: sort})
+  }
+
+  compareDistrictsReverse = (stateA, stateB) => {
+    const {activeSort} = this.state
+    const nameA = stateA.total[activeSort]
+    const nameB = stateB.total[activeSort]
+
+    if (nameA < nameB) {
+      return 1 // Reverse order
+    }
+    if (nameA > nameB) {
+      return -1 // Reverse order
+    }
+    return 0
   }
 
   renderAllProducts = () => {
     const {apiStatus, activeSort, statesList} = this.state
-    console.log(statesList, 'statesList')
+    const {districts} = statesList
+    console.log(districts)
+    const districtArray =
+      districts !== undefined
+        ? Object.entries(districts).map(([districtName, districtData]) => ({
+            name: districtName,
+            ...districtData,
+            total: {
+              ...districtData.total,
+              active: Number.isNaN(
+                districtData.total.confirmed -
+                  (districtData.total.recovered + districtData.total.deceased),
+              )
+                ? 0
+                : districtData.total.confirmed -
+                  (districtData.total.recovered + districtData.total.deceased),
+            },
+          }))
+        : []
+    const sortedDistrictsList =
+      statesList.districts !== undefined
+        ? districtArray.sort(this.compareDistrictsReverse)
+        : []
+    // console.log(statesList, 'statesList')
+    console.log(sortedDistrictsList)
     switch (apiStatus) {
       case apiStatusConstants.success:
         return (
@@ -309,53 +347,74 @@ class StateCovidDetails extends Component {
               </div>
             </div>
 
-            <select
-              className="hor-card"
-              value={activeSort}
-              onChange={this.onChangeActiveSort}
-            >
-              <option value="confirmed">
-                <div testid="countryWideConfirmedCases">
+            <div className="hor-card">
+              <button
+                type="button"
+                onClick={() => this.onChangeActiveSort('confirmed')}
+              >
+                <div testid="stateSpecificConfirmedCasesContainer">
                   <p>Confirmed</p>
                   <img
-                    alt="country wide confirmed cases pic"
+                    alt="state specific confirmed cases pic"
                     src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383239/check-mark_1_h9x9vy.png"
                   />
                   <p>{statesList.confirmed}</p>
                 </div>
-              </option>
-              <option value="active">
-                <div testid="countryWideActiveCases">
+              </button>
+
+              <button
+                type="button"
+                onClick={() => this.onChangeActiveSort('active')}
+              >
+                <div testid="stateSpecificActiveCasesContainer">
                   <p>Active</p>
                   <img
-                    alt="country wide active cases pic"
+                    alt="state specific active cases pic"
                     src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383323/protection_1_vb9yi3.png"
                   />
                   <p>{statesList.active}</p>
                 </div>
-              </option>
-              <option value="recovered">
-                <div testid="countryWideRecoveredCases">
+              </button>
+
+              <button
+                type="button"
+                onClick={() => this.onChangeActiveSort('recovered')}
+              >
+                <div testid="stateSpecificRecoveredCasesContainer">
                   <p>Recovered</p>
                   <img
-                    alt="country wide recovered cases pic"
+                    alt="state specific recovered cases pic"
                     src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383323/recovered_1_dtdq2j.png"
                   />
                   <p>{statesList.recovered}</p>
                 </div>
-              </option>
-              <option value="deceased">
-                <div testid="countryWideDeceasedCases">
+              </button>
+
+              <button
+                type="button"
+                onClick={() => this.onChangeActiveSort('deceased')}
+              >
+                <div testid="stateSpecificDeceasedCasesContainer">
                   <p>Deceased</p>
                   <img
-                    alt="country wide deceased cases pic"
+                    alt="state specific deceased cases pic"
                     src="https://res.cloudinary.com/dnnvnrk3i/image/upload/v1705383322/breathing_1_raykzi.png"
                   />
                   <p>{statesList.deceased}</p>
                 </div>
-              </option>
-            </select>
-
+              </button>
+            </div>
+            <h1>Top Districts</h1>
+            <ul testid="topDistrictsUnorderedList">
+              {Object.entries(sortedDistrictsList).map(
+                ([districtName, districtData]) => (
+                  <li className="hor-card" key={districtName}>
+                    <p>{districtData.total[activeSort]}</p>
+                    <p>{districtData.name}</p>
+                  </li>
+                ),
+              )}
+            </ul>
             <Footer />
           </div>
         )
