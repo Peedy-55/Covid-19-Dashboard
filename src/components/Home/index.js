@@ -188,12 +188,12 @@ class Home extends Component {
     const response = await fetch(apiUrl, options)
 
     const data = await response.json()
-    // console.log(stateCodes, data)
+    console.log(data, 'data')
     const resultList = this.convertObjectsDataIntoListItemsUsingForInMethod(
       stateCodes,
       data,
     )
-    console.log(resultList)
+    console.log(resultList, 'result list')
     this.setState({
       statesList: resultList,
       apiStatus: apiStatusConstants.success,
@@ -237,8 +237,12 @@ class Home extends Component {
     this.setState()
     const sortedStatesList =
       activeSortId === 0
-        ? statesList.sort(this.compareStates)
-        : statesList.sort(this.compareStatesReverse)
+        ? statesList.sort((a, b) =>
+            b.name.toLowerCase().localeCompare(a.name.toLowerCase()),
+          )
+        : statesList.sort((a, b) =>
+            a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
+          )
     this.setState(prevState => ({
       activeSortId: 1 - prevState.activeSortId,
       statesList: sortedStatesList,
@@ -401,8 +405,8 @@ class Home extends Component {
                     each.name.toLowerCase().includes(searchInput.toLowerCase()),
                   )
                   .map(match => (
-                    <li className="hor-card">
-                      <Link to={`state/${match.stateCode}`}>
+                    <li key={match.stateCode} className="hor-card">
+                      <Link to={`/state/${match.stateCode}`}>
                         <div className="hor-card">
                           <p>{match.name}</p>
                           <div className="hor-card">

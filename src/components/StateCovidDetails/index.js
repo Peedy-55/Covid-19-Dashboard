@@ -1,7 +1,18 @@
 /* eslint-disable react/no-unknown-property */
 import {Component} from 'react'
 import Loader from 'react-loader-spinner'
-// import Select from 'react-select's
+import {
+  LineChart,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  Line,
+  BarChart,
+  Bar,
+} from 'recharts'
+// import Select from 'react-select'
 
 import Header from '../Header'
 import Footer from '../Footer'
@@ -12,6 +23,7 @@ const apiStatusConstants = {
   initial: 'INITIAL',
   success: 'SUCCESS',
   inProgress: 'IN_PROGRESS',
+  inProgress2: 'IN_PROGRESS2',
 }
 
 const stateCodes = [
@@ -147,6 +159,7 @@ const stateCodes = [
     state_code: 'TR',
     state_name: 'Tripura',
   },
+
   {
     state_code: 'UP',
     state_name: 'Uttar Pradesh',
@@ -164,22 +177,23 @@ const stateCodes = [
 class StateCovidDetails extends Component {
   state = {
     statesList: [],
+    datesList: [],
     activeSort: 'confirmed',
     apiStatus: apiStatusConstants.initial,
   }
 
   componentDidMount() {
-    this.getStates()
     this.getDistricts()
+    this.getStates()
   }
 
-  getDistricts = () => {
-    // const {match} = this.props
-    // const {params} = match
-    // const {stateCode} = params
+  getDistricts = async () => {
+    const {match} = this.props
+    const {params} = match
+    const {stateCode} = params
 
     this.setState({
-      apiStatus: apiStatusConstants.inProgress,
+      apiStatus: apiStatusConstants.inProgress2,
     })
 
     const requestUrl = 'https://apis.ccbp.in/covid19-timelines-data'
@@ -187,21 +201,32 @@ class StateCovidDetails extends Component {
       method: 'GET',
     }
     // console.log(stateCode)
-    fetch(requestUrl, options)
-      .then(response => response.json())
-      .then(jsonData => {
-        console.log(jsonData)
+    const response = await fetch(requestUrl, options)
+    const data = await response.json()
+    const formattedData = Object.entries(data[stateCode].dates).map(
+      ([date, details]) => ({
+        date,
+        confirmed: details.total.confirmed,
+        recovered: details.total.recovered,
+        active:
+          details.total.confirmed -
+          (details.total.recovered + details.total.deceased),
+        tested: details.total.tested,
+        deceased: details.total.deceased,
+      }),
+    )
 
-        // const keyNames = Object.keys(jsonData[stateCode].dates)
-
-        // keyNames.forEach(date => {
-        //   console.log('date: ', date)
-        //   console.log('confirmed:', jsonData[stateCode].dates[date].total.confirmed)
-        //   console.log('deceased:', jsonData[stateCode].dates[date].total.deceased)
-        //   console.log('recovered:', jsonData[stateCode].dates[date].total.recovered)
-        //   console.log('tested:', jsonData[stateCode].dates[date].total.tested)
-        // })
-      })
+    // console.log(formattedData)
+    this.setState(() => ({
+      datesList: formattedData,
+    }))
+    // keyNames.forEach(date => {
+    //   console.log('date: ', date)
+    //   console.log('confirmed:', data[stateCode].dates[date].total.confirmed)
+    //   console.log('deceased:', data[stateCode].dates[date].total.deceased)
+    //   console.log('recovered:', data[stateCode].dates[date].total.recovered)
+    //   console.log('tested:', data[stateCode].dates[date].total.tested)
+    // })
   }
 
   getStates = async () => {
@@ -228,7 +253,7 @@ class StateCovidDetails extends Component {
     )
     // console.log(resultList, 'stateCovidDetails')
     const requiredResult = resultList.find(each => each.stateCode === stateCode)
-    console.log(requiredResult)
+    // console.log(requiredResult, 'requiredList')
     this.setState({
       statesList: requiredResult,
       apiStatus: apiStatusConstants.success,
@@ -247,11 +272,17 @@ class StateCovidDetails extends Component {
     </div>
   )
 
+  renderLoadingView2 = () => (
+    <div testid="timelinesDataLoader" className="products-loader-container">
+      <Loader type="ThreeDots" color="#0b69ff" height="50" width="50" />
+    </div>
+  )
+
   convertObjectsDataIntoListItemsUsingForInMethod = (statesList, data) => {
     const resultList = []
 
     const keyNames = Object.keys(data)
-
+    console.log(data.dates)
     keyNames.forEach(keyName => {
       if (data[keyName]) {
         const {total, districts, meta} = data[keyName]
@@ -305,9 +336,10 @@ class StateCovidDetails extends Component {
   }
 
   renderAllProducts = () => {
-    const {apiStatus, activeSort, statesList} = this.state
+    const {apiStatus, activeSort, datesList, statesList} = this.state
     const {districts} = statesList
-    console.log(districts)
+    // console.log(datesList, datesList.slice(datesList.length - 10), 'last 10')
+    // console.log(districts)
     const districtArray =
       districts !== undefined
         ? Object.entries(districts).map(([districtName, districtData]) => ({
@@ -330,7 +362,7 @@ class StateCovidDetails extends Component {
         ? districtArray.sort(this.compareDistrictsReverse)
         : []
     // console.log(statesList, 'statesList')
-    console.log(sortedDistrictsList)
+    // console.log(sortedDistrictsList)
     switch (apiStatus) {
       case apiStatusConstants.success:
         return (
@@ -404,22 +436,75 @@ class StateCovidDetails extends Component {
                 </div>
               </button>
             </div>
-            <h1>Top Districts</h1>
-            <ul testid="topDistrictsUnorderedList">
-              {Object.entries(sortedDistrictsList).map(
-                ([districtName, districtData]) => (
-                  <li className="hor-card" key={districtName}>
-                    <p>{districtData.total[activeSort]}</p>
-                    <p>{districtData.name}</p>
-                  </li>
-                ),
-              )}
-            </ul>
+            <div testid="lineChartsContainer">
+              <h1>Top Districts</h1>
+              <ul testid="topDistrictsUnorderedList">
+                {Object.entries(sortedDistrictsList).map(
+                  ([districtName, districtData]) => (
+                    <li className="hor-card" key={districtName}>
+                      <p>{districtData.total[activeSort]}</p>
+                      <p>{districtData.name}</p>
+                    </li>
+                  ),
+                )}
+              </ul>
+              <div>
+                <h1>Bar Chart</h1>
+                <div>
+                  <BarChart
+                    width={800}
+                    height={450}
+                    data={datesList.slice(datesList.length - 10)}
+                  >
+                    <CartesianGrid strokeDasharray="" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar
+                      dataKey={activeSort}
+                      fill="#8884d8"
+                      className="bar"
+                      label={{position: 'top', color: 'white'}}
+                    />
+                  </BarChart>
+                  <div>
+                    {/* <h1>Top Districts</h1>
+                  <h1>Daily Spread Trends</h1> */}
+                    {[
+                      'confirmed',
+                      'active',
+                      'recovered',
+                      'deceased',
+                      'tested',
+                    ].map(each => (
+                      <LineChart
+                        key={each}
+                        width={730}
+                        height={250}
+                        data={datesList}
+                        margin={{top: 5, right: 30, left: 20, bottom: 5}}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey={each} stroke="#8884d8" />
+                      </LineChart>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
             <Footer />
           </div>
         )
+      case apiStatusConstants.inProgress2:
+        return this.renderLoadingView2()
       case apiStatusConstants.inProgress:
         return this.renderLoadingView()
+
       default:
         return null
     }
